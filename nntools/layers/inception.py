@@ -39,8 +39,8 @@ def inception_module(l_in, num_1x1, reduce_3x3, num_3x3, reduce_5x5, num_5x5, nu
         out_layers.append(l_5x5)
     
     # 3x3 pooling
-    # TODO: pad l_in here to make sure that the pooling has the same output dimensions.
-    l_pool_3x3 = cuda_convnet.MaxPool2DCCLayer(l_in, ds=(3, 3), strides=(1, 1))
+    l_in_padded = base.PadLayer(l_in, width=1, batch_ndim=2)
+    l_pool_3x3 = cuda_convnet.MaxPool2DCCLayer(l_in_padded, ds=(3, 3), strides=(1, 1))
     if num_pool_proj > 0:
         l_pool_proj = base.NINLayer(l_pool_3x3, num_units=num_pool_proj)
     else:

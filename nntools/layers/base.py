@@ -512,6 +512,8 @@ class FlattenLayer(Layer):
     def get_output_for(self, input, *args, **kwargs):
         return input.flatten(2)
 
+flatten = FlattenLayer # shortcut
+
 
 class ConcatLayer(MultipleInputsLayer):
     def __init__(self, input_layers, axis=1):
@@ -526,6 +528,8 @@ class ConcatLayer(MultipleInputsLayer):
 
     def get_output_for(self, inputs, *args, **kwargs):
         return T.concatenate(inputs, axis=self.axis)
+
+concat = ConcatLayer # shortcut
 
 
 class PadLayer(Layer):
