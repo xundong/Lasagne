@@ -41,6 +41,7 @@ def inception_module(l_in, num_1x1, reduce_3x3, num_3x3, reduce_5x5, num_5x5, nu
     # 3x3 pooling
     l_in_padded = base.PadLayer(l_in, width=1, batch_ndim=2)
     l_pool_3x3 = cuda_convnet.MaxPool2DCCLayer(l_in_padded, ds=(3, 3), strides=(1, 1))
+
     if num_pool_proj > 0:
         l_pool_proj = base.NINLayer(l_pool_3x3, num_units=num_pool_proj)
     else:
