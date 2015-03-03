@@ -1,6 +1,7 @@
 import numpy as np
 
 import theano
+import theano.tensor as T
 
 from .. import utils
 
@@ -11,7 +12,7 @@ __all__ = [
 ]
 
 
-# Layer base class
+## Layer base class
 
 class Layer(object):
     """
@@ -22,7 +23,7 @@ class Layer(object):
     network's output :class:`Layer` instance can double as a handle to the
     full network.
     """
-    def __init__(self, incoming, name=None):
+    def __init__(self, incoming, l_w=1, l_b=0,name=None):
         """
         Instantiates the layer.
 
@@ -39,6 +40,8 @@ class Layer(object):
             self.input_shape = incoming.get_output_shape()
             self.input_layer = incoming
         self.name = name
+        self.l_w=l_w
+        self.l_b=l_b
 
     def get_params(self):
         """
@@ -124,7 +127,7 @@ class Layer(object):
             raise RuntimeError("get_output() called on a free-floating layer; "
                                "there isn't anything to get its input from. "
                                "Did you mean get_output_for()?")
-        else:  # in all other cases, just pass the input on to the next layer.
+        else: # in all other cases, just pass the input on to the next layer.
             layer_input = self.input_layer.get_output(input, *args, **kwargs)
             return self.get_output_for(layer_input, *args, **kwargs)
 
@@ -217,32 +220,26 @@ class Layer(object):
 
         if isinstance(param, theano.compile.SharedVariable):
             # We cannot check the shape here, the shared variable might not be
-            # initialized correctly yet. We can check the dimensionality
-            # though. Note that we cannot assign a name here.
+            # initialized correctly yet. We can check the dimensionality though.
+            # Note that we cannot assign a name here.
             if param.ndim != len(shape):
-                raise RuntimeError("shared variable has %d dimensions, "
-                                   "should be %d" % (param.ndim, len(shape)))
+                raise RuntimeError("shared variable has %d dimensions, should be %d" % (param.ndim, len(shape)))
             return param
 
         elif isinstance(param, np.ndarray):
             if param.shape != shape:
-                raise RuntimeError("parameter array has shape %s, should be "
-                                   "%s" % (param.shape, shape))
+                raise RuntimeError("parameter array has shape %s, should be %s" % (param.shape, shape))
             return theano.shared(param, name=name)
 
         elif hasattr(param, '__call__'):
             arr = param(shape)
             if not isinstance(arr, np.ndarray):
-                raise RuntimeError("cannot initialize parameters: the "
-                                   "provided callable did not return a numpy "
-                                   "array")
+                raise RuntimeError("cannot initialize parameters: the provided callable did not return a numpy array")
 
             return theano.shared(utils.floatX(arr), name=name)
 
         else:
-            raise RuntimeError("cannot initialize parameters: 'param' is not "
-                               "a numpy array, a Theano shared variable, or a "
-                               "callable")
+            raise RuntimeError("cannot initialize parameters: 'param' is not a numpy array, a Theano shared variable, or a callable")
 
 
 class MultipleInputsLayer(Layer):
@@ -280,10 +277,8 @@ class MultipleInputsLayer(Layer):
             raise RuntimeError("get_output() called on a free-floating layer; "
                                "there isn't anything to get its inputs from. "
                                "Did you mean get_output_for()?")
-        # In all other cases, just pass the network input on to the next layers
-        else:
-            layer_inputs = [input_layer.get_output(input, *args, **kwargs) for
-                            input_layer in self.input_layers]
+        else: # in all other cases, just pass the network input on to the next layers.
+            layer_inputs = [input_layer.get_output(input, *args, **kwargs) for input_layer in self.input_layers]
             return self.get_output_for(layer_inputs, *args, **kwargs)
 
     def get_output_shape_for(self, input_shapes):
@@ -336,3 +331,4 @@ class MultipleInputsLayer(Layer):
             `NotImplementedError`.
         """
         raise NotImplementedError
+
